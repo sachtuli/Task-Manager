@@ -1,6 +1,6 @@
 const express = require('express')
 const multer = require('multer')
-const sharp = require("sharp")
+const sharp = require('sharp')
 const User = require('../models/create_user')
 const router = new express.Router()
 
@@ -37,7 +37,7 @@ router.post('/users/logout', auth, async (req, res) => {
     await req.user.save()
     res.status(200).send('Logout Successful')
   } catch (error) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: error.message })
   }
 })
 
@@ -47,22 +47,18 @@ router.post('/users/logoutAll', auth, async (req, res) => {
     await req.user.save()
     res.status(200).send('Logout from all Active Sessions Successful')
   } catch (error) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: error.message })
   }
 })
 
 const upload = multer({
   //  dest: './src/avatars',  // to store data in filesystem
-  limits: { fileSize: 1000000 }, //1MB limit
-  fileFilter(req, file, cb) {
-    try {
-      if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
-        return cb(new Error('Only jpg/jpeg/png format supported.'))
-      }
-      return cb(undefined, true)
-    } catch (error) {
-      res.status(500).send(error.message)
+  limits: { fileSize: 1000000 }, // 1MB limit
+  fileFilter (req, file, cb) {
+    if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
+      return cb(new Error('Only jpg/jpeg/png format supported.'))
     }
+    cb(undefined, true)
   }
 })
 
@@ -71,7 +67,7 @@ router.post(
   auth,
   upload.single('avatar'),
   async (req, res) => {
-    const buffer = await sharp(req.file.buffer).resize({width: 250,height: 250}).png().toBuffer()
+    const buffer = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer()
     req.user.avatar = buffer
     await req.user.save()
     res.send('Image Upload Successful.')
@@ -109,8 +105,8 @@ router.patch('/users/me', auth, async (req, res) => {
     return res.status(400).send({ error: 'Invalid Update Request' })
   }
   try {
-    //const _id = req.params.id
-    //const user = await User.findByIdAndUpdate(_id, req.body, { new: true, runValidators: true })
+    // const _id = req.params.id
+    // const user = await User.findByIdAndUpdate(_id, req.body, { new: true, runValidators: true })
     const user = await req.user
     updates.forEach((update) => (user[update] = req.body[update]))
     await user.save()
@@ -151,24 +147,23 @@ router.delete('/users/me', auth, async (req, res) => {
 })
 
 /** User  Can delete its Profile Picture */
-router.delete('/users/me/avatar',auth,async (req, res) => {
-    req.user.avatar = undefined
-    await req.user.save()
-    res.send('Profile Image Removed.')
-  },
-  (error, req, res, next) => {
-    res.status(400).send({ error: error.message })
-  }
+router.delete('/users/me/avatar', auth, async (req, res) => {
+  req.user.avatar = undefined
+  await req.user.save()
+  res.send('Profile Image Removed.')
+},
+(error, req, res, next) => {
+  res.status(400).send({ error: error.message })
+}
 )
 
-router.get('/users/:id/avatar', async (req, res) => {   //http://localhost:3000/users/6329a0ae5dba38f98019aa68/avatar
+router.get('/users/:id/avatar', async (req, res) => { // http://localhost:3000/users/6329a0ae5dba38f98019aa68/avatar
   try {
     const user = await User.findById(req.params.id)
-    if (!user || !user.avatar) throw new  Error(' User Id Not Found')
-     
-    //res.set('Content-Type','image/png')
-    res.send(user.avatar)
+    if (!user || !user.avatar) throw new Error(' User Id Not Found')
 
+    // res.set('Content-Type','image/png')
+    res.send(user.avatar)
   } catch (error) {
     res.status(400).send(error.message)
   }
